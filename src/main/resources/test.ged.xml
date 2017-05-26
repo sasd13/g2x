@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE gedcom SYSTEM "gedcom.dtd">
 <?xml-stylesheet href="xml2html.xsl" type="text/xsl"?>
+<!DOCTYPE gedcom SYSTEM "gedcom.dtd">
 <gedcom>
   <indi id="id-I1" sex="M">
     <name>Bob /Cox/</name>

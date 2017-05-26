@@ -22,10 +22,17 @@ import org.jdom2.output.XMLOutputter;
 
 public class Gedcom2XML {
 
-	private static final List<String> TAGS = Arrays.asList("INDI", "FAM", "NAME", "SEX", "FAMC", "FAMS", "BIRT", "CHR", "DEAT", "BURI", "HUSB", "WIFE", "CHIL", "MARR", "DIV", "DATE", "PLAC", "OBJE", "FORM", "TITL", "FILE");
-	private static final List<String> TAGS_INDI = Arrays.asList("HUSB", "WIFE", "CHIL");
-	private static final List<String> TAGS_FAM = Arrays.asList("FAMC", "FAMS");
-	private static final List<String> TAGS_EVENT = Arrays.asList("BIRT", "CHR", "DEAT", "BURI", "MARR", "DIV");
+	private static final List<String> TAGS, TAGS_INDI, TAGS_FAM, TAGS_EVENT;
+	private static final String SEPARATOR = " ";
+
+	static {
+		AppProperties.init(new String[] { "tags.properties" });
+
+		TAGS = Arrays.asList(AppProperties.getProperty("tags").split(SEPARATOR));
+		TAGS_INDI = Arrays.asList(AppProperties.getProperty("tags.indi").split(SEPARATOR));
+		TAGS_FAM = Arrays.asList(AppProperties.getProperty("tags.fam").split(SEPARATOR));
+		TAGS_EVENT = Arrays.asList(AppProperties.getProperty("tags.event").split(SEPARATOR));
+	}
 
 	public static void main(String[] args) {
 		String path = args[0];
@@ -97,7 +104,7 @@ public class Gedcom2XML {
 					break;
 				} else if (TAGS.contains(type) || (type.startsWith("@") && TAGS.contains(value))) {
 					popStack(stack, index, lastIndex);
-					pushElement(stack, type, buildValue(tokenizer, value));
+					pushElement(stack, type, concat(value, tokenizer));
 
 					lastIndex = index;
 				} else {
@@ -112,8 +119,8 @@ public class Gedcom2XML {
 	private static Document getDocumentInstance() {
 		Document document = new Document(new Element("gedcom"));
 
-		document.getContent().add(0, new ProcessingInstruction("xml-stylesheet", getHeaders()));
 		document.setDocType(new DocType("gedcom", "gedcom.dtd"));
+		document.getContent().add(0, new ProcessingInstruction("xml-stylesheet", getHeaders()));
 
 		return document;
 	}
@@ -135,7 +142,7 @@ public class Gedcom2XML {
 		}
 	}
 
-	private static String buildValue(StringTokenizer tokenizer, String value) {
+	private static String concat(String value, StringTokenizer tokenizer) {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append(value);
@@ -152,18 +159,16 @@ public class Gedcom2XML {
 
 		if (type.startsWith("@")) {
 			element = addReference(stack, type, value);
+		} else if (type.contains("SEX")) {
+			stack.peek().setAttribute("sex", value);
+		} else if (TAGS_INDI.contains(type)) {
+			element = addPerson(stack, type, value);
+		} else if (TAGS_FAM.contains(type)) {
+			element = addFamily(stack, type, value);
+		} else if (TAGS_EVENT.contains(type)) {
+			element = addEvent(stack, type, value);
 		} else {
-			if (type.contains("SEX")) {
-				stack.peek().setAttribute("sex", value);
-			} else if (TAGS_INDI.contains(type)) {
-				element = addPerson(stack, type, value);
-			} else if (TAGS_FAM.contains(type)) {
-				element = addFamily(stack, type, value);
-			} else if (TAGS_EVENT.contains(type)) {
-				element = addEvent(stack, type, value);
-			} else {
-				element = addOther(stack, type, value);
-			}
+			element = addOther(stack, type, value);
 		}
 
 		stack.push(element);
@@ -250,7 +255,9 @@ public class Gedcom2XML {
 		try {
 			System.out.println("Writing XML file...");
 
-			xop.output(document, new FileOutputStream(xmlFile));
+			fos = new FileOutputStream(xmlFile);
+
+			xop.output(document, fos);
 
 			System.out.println("XML generated !");
 		} catch (IOException e) {
