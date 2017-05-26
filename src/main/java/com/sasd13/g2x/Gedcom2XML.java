@@ -22,17 +22,21 @@ import org.jdom2.output.XMLOutputter;
 
 public class Gedcom2XML {
 
+	private static final List<String> TAGS = Arrays.asList("INDI", "FAM", "NAME", "SEX", "FAMC", "FAMS", "BIRT", "CHR", "DEAT", "BURI", "HUSB", "WIFE", "CHIL", "MARR", "DIV", "DATE", "PLAC", "OBJE", "FORM", "TITL", "FILE");
+	private static final List<String> TAGS_INDI = Arrays.asList("HUSB", "WIFE", "CHIL");
+	private static final List<String> TAGS_FAM = Arrays.asList("FAMC", "FAMS");
+	private static final List<String> TAGS_EVENT = Arrays.asList("BIRT", "CHR", "DEAT", "BURI", "MARR", "DIV");
+
 	public static void main(String[] args) {
 		String path = args[0];
 		File file = new File(path);
 
 		if (!file.exists()) {
 			System.out.println("Gedcom file not exists");
-			return;
 		} else {
 			Document document = buildXMLDocument(readGedcomFile(file));
 
-			writeXMLFile(new File(path.substring(0, path.lastIndexOf(".")) + ".xml"), document);
+			writeXMLFile(new File(file.getName() + ".xml"), document);
 		}
 	}
 
@@ -74,14 +78,6 @@ public class Gedcom2XML {
 
 		Stack<Element> stack = new Stack<Element>();
 		StringTokenizer tokenizer = null;
-		StringBuilder builder = null;
-		Element element = null;
-
-		List<String> tags = Arrays.asList("INDI", "FAM", "NAME", "SEX", "FAMC", "FAMS", "BIRT", "CHR", "DEAT", "BURI", "HUSB", "WIFE", "CHIL", "MARR", "DIV", "DATE", "PLAC", "OBJE", "FORM", "TITL", "FILE");
-		List<String> tagsPerson = Arrays.asList("HUSB", "WIFE", "CHIL");
-		List<String> tagsFamily = Arrays.asList("FAMC", "FAMS");
-		List<String> tagsEvent = Arrays.asList("BIRT", "CHR", "DEAT", "BURI", "MARR", "DIV");
-
 		int index = -1, lastIndex = -1;
 		String type = null, value = null;
 
@@ -89,69 +85,31 @@ public class Gedcom2XML {
 
 		while (!lines.isEmpty()) {
 			tokenizer = new StringTokenizer(lines.removeFirst());
-			
+
 			if (tokenizer.countTokens() <= 0) {
 				break;
 			}
 
 			type = tokenizer.nextToken();
 			index = Integer.parseInt(tokenizer.nextToken());
+			value = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
 
 			if (type.contains("TRLR")) {
 				break;
-			} else if (tags.contains(type) || (type.startsWith("@") && tags.contains(value))) {
-				builder = new StringBuilder();
-				value = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
-				
-				if (index <= lastIndex) {
-					for (int i = 0; i <= lastIndex - index; i++) {
-						stack.pop();
-					}
-				}
-
-				builder.append(value);
-
-				while (tokenizer.hasMoreTokens()) {
-					builder.append(" " + tokenizer.nextToken());
-				}
-
-				value = builder.toString();
-
-				if (type.startsWith("@")) {
-					element = pushReference(stack, type, value);
-				} else {
-					if (type.contains("SEX")) {
-						stack.peek().setAttribute("sex", value);
-					} else if (tagsPerson.contains(type)) {
-						element = pushPerson(stack, type, value);
-					} else if (tagsFamily.contains(type)) {
-						element = pushFamily(stack, type, value);
-					} else if (tagsEvent.contains(type)) {
-						element = pushEvent(stack, type, value);
-					} else {
-						element = pushOther(stack, type, value);
-					}
-				}
+			} else if (TAGS.contains(type) || (type.startsWith("@") && TAGS.contains(value))) {
+				cleanStack(stack, index, lastIndex);
+				pushElement(stack, type, getValue(tokenizer, value));
 
 				lastIndex = index;
-				stack.push(element);
 			} else {
-				do {
-					tokenizer = new StringTokenizer(lines.getFirst());
-
-					if (tokenizer.countTokens() > 0 && Integer.parseInt(tokenizer.nextToken()) <= index) {
-						break;
-					}
-
-					lines.removeFirst();
-				} while (!lines.isEmpty());
+				removeLines(lines, index);
 			}
 		}
 
 		return document;
 	}
 
-	public static Document getDocumentInstance() {
+	private static Document getDocumentInstance() {
 		Document document = new Document(new Element("gedcom"));
 
 		document.setDocType(new DocType("gedcom", "gedcom.dtd"));
@@ -169,7 +127,49 @@ public class Gedcom2XML {
 		return headers;
 	}
 
-	private static Element pushReference(Stack<Element> stack, String type, String value) {
+	private static void cleanStack(Stack<Element> stack, int index, int lastIndex) {
+		if (index <= lastIndex) {
+			for (int i = 0; i <= lastIndex - index; i++) {
+				stack.pop();
+			}
+		}
+	}
+
+	private static String getValue(StringTokenizer tokenizer, String value) {
+		StringBuilder builder = new StringBuilder();
+
+		builder.append(value);
+
+		while (tokenizer.hasMoreTokens()) {
+			builder.append(" " + tokenizer.nextToken());
+		}
+
+		return builder.toString();
+	}
+
+	private static void pushElement(Stack<Element> stack, String type, String value) {
+		Element element = null;
+
+		if (type.startsWith("@")) {
+			element = pushReference(stack, type);
+		} else {
+			if (type.contains("SEX")) {
+				stack.peek().setAttribute("sex", value);
+			} else if (TAGS_INDI.contains(type)) {
+				element = pushPerson(stack, type, value);
+			} else if (TAGS_FAM.contains(type)) {
+				element = pushFamily(stack, type, value);
+			} else if (TAGS_EVENT.contains(type)) {
+				element = pushEvent(stack, type, value);
+			} else {
+				element = pushOther(stack, type, value);
+			}
+		}
+
+		stack.push(element);
+	}
+
+	private static Element pushReference(Stack<Element> stack, String type) {
 		Element element = new Element(type.toLowerCase());
 
 		element.setAttribute("id", "id-" + type.substring(1, type.lastIndexOf("@")));
@@ -224,6 +224,20 @@ public class Gedcom2XML {
 		stack.peek().addContent(element);
 
 		return element;
+	}
+
+	private static void removeLines(LinkedList<String> lines, int index) {
+		StringTokenizer tokenizer;
+
+		do {
+			tokenizer = new StringTokenizer(lines.getFirst());
+
+			if (tokenizer.countTokens() > 0 && Integer.parseInt(tokenizer.nextToken()) <= index) {
+				break;
+			}
+
+			lines.removeFirst();
+		} while (!lines.isEmpty());
 	}
 
 	private static void writeXMLFile(File xmlFile, Document document) {

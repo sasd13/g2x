@@ -1,102 +1,102 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
-	<xsd:element name="titl" type="xsd:string"/>
-	
-	<xsd:element name="gedcom" type="Gedcom"/>
-	
+	<xsd:element name="titl" type="xsd:string" />
+
+	<xsd:element name="gedcom" type="Gedcom" />
+
 	<xsd:complexType name="Gedcom">
 		<xsd:choice maxOccurs="unbounded">
-  			<xsd:element name="indi" type="Indi"/>
-          	<xsd:element name="fam" type="Fam"/>  	
-        </xsd:choice>	
-    </xsd:complexType>
-    
-    <xsd:complexType name="Indi">
-      	<xsd:sequence>
-		  	<xsd:element name="name" type="xsd:string" minOccurs="0"/>
-		  	<xsd:element ref="titl" minOccurs="0"/>
-		  	<xsd:choice minOccurs="0" maxOccurs="unbounded">
-		  		<xsd:element name="famx" type="Famx"/>
-          		<xsd:element name="event" type="Event"/>
-		  	</xsd:choice>
-		  	
-		  	<xsd:element name="obje" type="Obje" minOccurs="0" maxOccurs="unbounded"/>
-      	</xsd:sequence>
-	  	<xsd:attribute name="id" use="required" type="xsd:ID"/>
-	  	<xsd:attribute name="sex" use="optional">
-	    	<xsd:simpleType>
+			<xsd:element name="indi" type="Indi" />
+			<xsd:element name="fam" type="Fam" />
+		</xsd:choice>
+	</xsd:complexType>
+
+	<xsd:complexType name="Indi">
+		<xsd:sequence>
+			<xsd:element name="name" type="xsd:string" minOccurs="0" />
+			<xsd:element ref="titl" minOccurs="0" />
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element name="famx" type="Famx" />
+				<xsd:element name="event" type="Event" />
+			</xsd:choice>
+
+			<xsd:element name="obje" type="Obje" minOccurs="0" maxOccurs="unbounded" />
+		</xsd:sequence>
+		<xsd:attribute name="id" use="required" type="xsd:ID" />
+		<xsd:attribute name="sex" use="optional">
+			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="M"/>
-					<xsd:enumeration value="F"/>
+					<xsd:enumeration value="M" />
+					<xsd:enumeration value="F" />
 				</xsd:restriction>
 			</xsd:simpleType>
 		</xsd:attribute>
-    </xsd:complexType>
-  
-	<xsd:complexType name="Indix">
-    	<xsd:attribute name="ref" use="required" type="xsd:IDREF"/>
-		<xsd:attribute name="type" use="required">
-	    	<xsd:simpleType>
-				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="HUSB"/>
-					<xsd:enumeration value="WIFE"/>
-					<xsd:enumeration value="CHIL"/>
-				</xsd:restriction>
-			</xsd:simpleType>
-		</xsd:attribute>    
 	</xsd:complexType>
-  
-  	<xsd:complexType name="Fam">
-      	<xsd:choice maxOccurs="unbounded">
-          	<xsd:element name="indix" type="Indix"/>
-          	<xsd:element name="event" type="Event"/>
-		  	<xsd:element name="obje" type="Obje"/>
-      	</xsd:choice>
-	  	<xsd:attribute name="id" use="required" type="xsd:ID"/>
-    </xsd:complexType>
-  
-  	<xsd:complexType name="Famx">
-     	<xsd:attribute name="ref" use="required" type="xsd:IDREF"/>
-	 	<xsd:attribute name="type" use="required">
-	    	<xsd:simpleType>
+
+	<xsd:complexType name="Indix">
+		<xsd:attribute name="ref" use="required" type="xsd:IDREF" />
+		<xsd:attribute name="type" use="required">
+			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="FAMC"/>
-					<xsd:enumeration value="FAMS"/>
+					<xsd:enumeration value="HUSB" />
+					<xsd:enumeration value="WIFE" />
+					<xsd:enumeration value="CHIL" />
 				</xsd:restriction>
 			</xsd:simpleType>
-		</xsd:attribute> 
-  	</xsd:complexType>
-  
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="Fam">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="indix" type="Indix" />
+			<xsd:element name="event" type="Event" />
+			<xsd:element name="obje" type="Obje" />
+		</xsd:choice>
+		<xsd:attribute name="id" use="required" type="xsd:ID" />
+	</xsd:complexType>
+
+	<xsd:complexType name="Famx">
+		<xsd:attribute name="ref" use="required" type="xsd:IDREF" />
+		<xsd:attribute name="type" use="required">
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:string">
+					<xsd:enumeration value="FAMC" />
+					<xsd:enumeration value="FAMS" />
+				</xsd:restriction>
+			</xsd:simpleType>
+		</xsd:attribute>
+	</xsd:complexType>
+
 	<xsd:complexType name="Event" mixed="true">
-    	<xsd:choice minOccurs="0" maxOccurs="unbounded">
-       		<xsd:element name="date" type="xsd:string"/>
-       		<xsd:element name="plac" type="xsd:string"/>
-    	</xsd:choice>
-    	<xsd:attribute name="type" use="required">
-	    	<xsd:simpleType>
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="date" type="xsd:string" />
+			<xsd:element name="plac" type="xsd:string" />
+		</xsd:choice>
+		<xsd:attribute name="type" use="required">
+			<xsd:simpleType>
 				<xsd:restriction base="xsd:string">
-					<xsd:enumeration value="BIRT"/>
-					<xsd:enumeration value="CHR"/>
-					<xsd:enumeration value="DEAT"/>
-					<xsd:enumeration value="BURI"/>
-					<xsd:enumeration value="MARR"/>
-					<xsd:enumeration value="DIV"/>
+					<xsd:enumeration value="BIRT" />
+					<xsd:enumeration value="CHR" />
+					<xsd:enumeration value="DEAT" />
+					<xsd:enumeration value="BURI" />
+					<xsd:enumeration value="MARR" />
+					<xsd:enumeration value="DIV" />
 				</xsd:restriction>
 			</xsd:simpleType>
-		</xsd:attribute> 
-  	</xsd:complexType>
-  
-  	<xsd:complexType name="Obje">
-    	<xsd:choice maxOccurs="unbounded">
-        	<xsd:element name="form" type="xsd:string"/>
-        	<xsd:element ref="titl" minOccurs="0"/>
+		</xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="Obje">
+		<xsd:choice maxOccurs="unbounded">
+			<xsd:element name="form" type="xsd:string" />
+			<xsd:element ref="titl" minOccurs="0" />
 			<xsd:element name="file">
 				<xsd:complexType mixed="true">
 					<xsd:choice minOccurs="0">
-						<xsd:element name="form" type="xsd:string"/>
+						<xsd:element name="form" type="xsd:string" />
 					</xsd:choice>
 				</xsd:complexType>
 			</xsd:element>
-      	</xsd:choice>
-  	</xsd:complexType>
+		</xsd:choice>
+	</xsd:complexType>
 </xsd:schema>
