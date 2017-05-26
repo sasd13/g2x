@@ -151,7 +151,7 @@ public class Gedcom2XML {
 		Element element = null;
 
 		if (type.startsWith("@")) {
-			element = pushReference(stack, type, value);
+			element = addReference(stack, type, value);
 		} else {
 			if (type.contains("SEX")) {
 				stack.peek().setAttribute("sex", value);
@@ -169,7 +169,7 @@ public class Gedcom2XML {
 		stack.push(element);
 	}
 
-	private static Element pushReference(Stack<Element> stack, String type, String value) {
+	private static Element addReference(Stack<Element> stack, String type, String value) {
 		String id = type.substring(1, type.lastIndexOf("@"));
 		type = (new StringTokenizer(value)).nextToken();
 		Element element = new Element(type.toLowerCase());
