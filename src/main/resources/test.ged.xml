@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gedcom SYSTEM "gedcom.dtd">
+<?xml-stylesheet href="xml2html.xsl" type="text/xsl"?>
+<gedcom>
+  <indi id="id-I1" sex="M">
+    <name>Bob /Cox/</name>
+    <famx ref="id-F1" type="FAMS" />
+  </indi>
+  <indi id="id-I2" sex="F">
+    <name>Joann /Para/</name>
+    <famx ref="id-F1" type="FAMS" />
+  </indi>
+  <indi id="id-I3" sex="M">
+    <name>Bobby Jo /Cox/</name>
+    <famx ref="id-F1" type="FAMC" />
+  </indi>
+  <fam id="id-F1">
+    <indix ref="id-I1" type="HUSB" />
+    <indix ref="id-I2" type="WIFE" />
+    <event type="MARR" />
+    <indix ref="id-I3" type="CHIL" />
+  </fam>
+</gedcom>

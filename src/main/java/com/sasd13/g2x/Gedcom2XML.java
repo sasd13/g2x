@@ -34,9 +34,11 @@ public class Gedcom2XML {
 		if (!file.exists()) {
 			System.out.println("Gedcom file not exists");
 		} else {
+			System.out.println("Convert file : " + file.getAbsolutePath());
+
 			Document document = buildXMLDocument(readGedcomFile(file));
 
-			writeXMLFile(new File(file.getName() + ".xml"), document);
+			writeXMLFile(new File(file.getAbsolutePath() + ".xml"), document);
 		}
 	}
 
@@ -86,23 +88,21 @@ public class Gedcom2XML {
 		while (!lines.isEmpty()) {
 			tokenizer = new StringTokenizer(lines.removeFirst());
 
-			if (tokenizer.countTokens() <= 0) {
-				break;
-			}
+			if (tokenizer.countTokens() > 0) {
+				index = Integer.parseInt(tokenizer.nextToken());
+				type = tokenizer.nextToken();
+				value = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
 
-			type = tokenizer.nextToken();
-			index = Integer.parseInt(tokenizer.nextToken());
-			value = tokenizer.hasMoreTokens() ? tokenizer.nextToken() : "";
+				if (type.contains("TRLR")) {
+					break;
+				} else if (TAGS.contains(type) || (type.startsWith("@") && TAGS.contains(value))) {
+					popStack(stack, index, lastIndex);
+					pushElement(stack, type, buildValue(tokenizer, value));
 
-			if (type.contains("TRLR")) {
-				break;
-			} else if (TAGS.contains(type) || (type.startsWith("@") && TAGS.contains(value))) {
-				cleanStack(stack, index, lastIndex);
-				pushElement(stack, type, getValue(tokenizer, value));
-
-				lastIndex = index;
-			} else {
-				removeLines(lines, index);
+					lastIndex = index;
+				} else {
+					removeLines(lines, index);
+				}
 			}
 		}
 
@@ -112,8 +112,8 @@ public class Gedcom2XML {
 	private static Document getDocumentInstance() {
 		Document document = new Document(new Element("gedcom"));
 
-		document.setDocType(new DocType("gedcom", "gedcom.dtd"));
 		document.getContent().add(0, new ProcessingInstruction("xml-stylesheet", getHeaders()));
+		document.setDocType(new DocType("gedcom", "gedcom.dtd"));
 
 		return document;
 	}
@@ -127,7 +127,7 @@ public class Gedcom2XML {
 		return headers;
 	}
 
-	private static void cleanStack(Stack<Element> stack, int index, int lastIndex) {
+	private static void popStack(Stack<Element> stack, int index, int lastIndex) {
 		if (index <= lastIndex) {
 			for (int i = 0; i <= lastIndex - index; i++) {
 				stack.pop();
@@ -135,7 +135,7 @@ public class Gedcom2XML {
 		}
 	}
 
-	private static String getValue(StringTokenizer tokenizer, String value) {
+	private static String buildValue(StringTokenizer tokenizer, String value) {
 		StringBuilder builder = new StringBuilder();
 
 		builder.append(value);
@@ -151,67 +151,70 @@ public class Gedcom2XML {
 		Element element = null;
 
 		if (type.startsWith("@")) {
-			element = pushReference(stack, type);
+			element = pushReference(stack, type, value);
 		} else {
 			if (type.contains("SEX")) {
 				stack.peek().setAttribute("sex", value);
 			} else if (TAGS_INDI.contains(type)) {
-				element = pushPerson(stack, type, value);
+				element = addPerson(stack, type, value);
 			} else if (TAGS_FAM.contains(type)) {
-				element = pushFamily(stack, type, value);
+				element = addFamily(stack, type, value);
 			} else if (TAGS_EVENT.contains(type)) {
-				element = pushEvent(stack, type, value);
+				element = addEvent(stack, type, value);
 			} else {
-				element = pushOther(stack, type, value);
+				element = addOther(stack, type, value);
 			}
 		}
 
 		stack.push(element);
 	}
 
-	private static Element pushReference(Stack<Element> stack, String type) {
+	private static Element pushReference(Stack<Element> stack, String type, String value) {
+		String id = type.substring(1, type.lastIndexOf("@"));
+		type = (new StringTokenizer(value)).nextToken();
 		Element element = new Element(type.toLowerCase());
 
-		element.setAttribute("id", "id-" + type.substring(1, type.lastIndexOf("@")));
+		element.setAttribute("id", "id-" + id);
 		stack.peek().addContent(element);
 
 		return element;
 	}
 
-	private static Element pushPerson(Stack<Element> stack, String type, String value) {
+	private static Element addPerson(Stack<Element> stack, String type, String value) {
 		Element element = new Element("indix");
+		String id = value.substring(1, value.lastIndexOf("@"));
 
-		element.setAttribute("ref", "id-" + value.substring(1, value.lastIndexOf("@")));
+		element.setAttribute("ref", "id-" + id);
 		element.setAttribute("type", type);
 		stack.peek().addContent(element);
 
 		return element;
 	}
 
-	private static Element pushFamily(Stack<Element> stack, String type, String value) {
+	private static Element addFamily(Stack<Element> stack, String type, String value) {
 		Element element = new Element("famx");
+		String id = value.substring(1, value.lastIndexOf("@"));
 
-		element.setAttribute("ref", "id-" + value.substring(1, value.lastIndexOf("@")));
+		element.setAttribute("ref", "id-" + id);
 		element.setAttribute("type", type);
 		stack.peek().addContent(element);
 
 		return element;
 	}
 
-	private static Element pushEvent(Stack<Element> stack, String type, String value) {
+	private static Element addEvent(Stack<Element> stack, String type, String value) {
 		Element element = new Element("event");
 
 		element.setAttribute("type", type);
-		stack.peek().addContent(element);
-
 		if (!value.isEmpty()) {
 			element.setText(value);
 		}
+		stack.peek().addContent(element);
 
 		return element;
 	}
 
-	private static Element pushOther(Stack<Element> stack, String type, String value) {
+	private static Element addOther(Stack<Element> stack, String type, String value) {
 		Element element = new Element(type.toLowerCase());
 
 		if (value.startsWith("@")) {
